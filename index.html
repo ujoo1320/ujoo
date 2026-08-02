@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>전국 탁송 실전 판독기 v3.0</title>
+    <title>전국 탁송 실전 판독기 v4.0</title>
     <style>
         body { font-family: sans-serif; background-color: #f1f3f9; margin: 0; padding: 15px; color: #333; }
         .container { max-width: 500px; margin: 0 auto; background: #fff; padding: 20px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
@@ -12,29 +12,23 @@
         .search-box { display: flex; gap: 10px; margin-bottom: 20px; }
         input[type="text"] { flex: 1; padding: 12px; border: 2px solid #ddd; border-radius: 8px; font-size: 16px; outline: none; }
         .btn-search { padding: 12px 20px; background-color: #1a73e8; color: white; border: none; border-radius: 8px; font-size: 16px; font-weight: bold; cursor: pointer; }
-        .result-card { display: none; padding: 20px; border-radius: 10px; margin-bottom: 20px; }
-        .status-badge { font-size: 20px; font-weight: bold; text-align: center; margin-bottom: 15px; }
-        
-        /* 교통수단별 거리/시간 표 스타일 */
-        .info-table { width: 100%; border-collapse: collapse; margin-bottom: 15px; background: #fff; border-radius: 8px; overflow: hidden; }
-        .info-table th, .info-table td { padding: 12px; text-align: center; border: 1px solid #eee; font-size: 14px; }
-        .info-table th { background-color: #f8f9fa; font-weight: bold; color: #555; }
-        .info-table td.mode { font-weight: bold; color: #111; }
-        .info-table td.val { color: #ff5722; font-weight: bold; }
-        
-        .status-desc { font-size: 14px; line-height: 1.6; word-break: keep-all; color: #444; margin-top: 10px; }
+        .result-card { display: none; padding: 20px; border-radius: 10px; text-align: center; margin-bottom: 20px; }
+        .status-badge { font-size: 20px; font-weight: bold; margin-bottom: 10px; }
+        .status-desc { font-size: 14px; line-height: 1.6; word-break: keep-all; color: #444; }
         .green { background-color: #e6f4ea; color: #137333; border: 2px solid #137333; }
         .yellow { background-color: #fef7e0; color: #b06000; border: 2px solid #b06000; }
         .red { background-color: #fce8e6; color: #c5221f; border: 2px solid #c5221f; }
-        .map-buttons { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-        .map-btn { display: block; text-align: center; padding: 12px; color: white; text-decoration: none; border-radius: 8px; font-weight: bold; font-size: 14px; }
+        
+        .map-title { font-size: 14px; font-weight: bold; margin: 15px 0 8px 0; text-align: left; color: #555; }
+        .map-buttons { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px; }
+        .map-btn { display: block; text-align: center; padding: 14px; color: white; text-decoration: none; border-radius: 8px; font-weight: bold; font-size: 15px; }
         .kakao-btn { background-color: #fee500; color: #191919; }
         .naver-btn { background-color: #03cf5d; color: white; }
     </style>
 </head>
 <body>
 <div class="container">
-    <h2>🎯 전국 탁송/대리 실전 판독기 v3.0</h2>
+    <h2>🎯 전국 탁송/대리 실전 판독기 v4.0</h2>
     <div id="gpsStatus" class="gps-box">📍 내 GPS 위치 파악 중...</div>
     <div class="search-box">
         <input type="text" id="addressInput" placeholder="도착지 입력 (예: 강남역, 평동공단)" onkeypress="if(event.keyCode==13) judgeDestination()">
@@ -43,41 +37,13 @@
     
     <div id="resultCard" class="result-card">
         <div id="statusBadge" class="status-badge"></div>
-        
-        <!-- 수단별 예상 거리/시간 테이블 -->
-        <table class="info-table">
-            <thead>
-                <tr>
-                    <th>이동 수단</th>
-                    <th>예상 거리</th>
-                    <th>소요 시간</th>
-                </tr>
-            </thead>
-            <tbody>
-                <tr>
-                    <td class="mode">🚲 자전거</td>
-                    <td id="distBike">-</td>
-                    <td id="timeBike" class="val">-</td>
-                </tr>
-                <tr>
-                    <td class="mode">🚗 자동차</td>
-                    <td id="distCar">-</td>
-                    <td id="timeCar" class="val">-</td>
-                </tr>
-                <tr>
-                    <td class="mode">🏃 도보</td>
-                    <td id="distWalk">-</td>
-                    <td id="timeWalk" class="val">-</td>
-                </tr>
-            </tbody>
-        </table>
-        
         <div id="statusDesc" class="status-desc"></div>
     </div>
     
+    <div class="map-title">🗺️ 내 위치 기준 실시간 경로 내비 연동</div>
     <div class="map-buttons">
-        <a id="kakaoLink" href="#" target="_blank" class="map-btn kakao-btn">카카오맵 연동</a>
-        <a id="naverLink" href="#" target="_blank" class="map-btn naver-btn">네이버지도 연동</a>
+        <a id="kakaoLink" href="#" target="_blank" class="map-btn kakao-btn">카카오맵 경로</a>
+        <a id="naverLink" href="#" target="_blank" class="map-btn naver-btn">네이버지도 경로</a>
     </div>
 </div>
 
@@ -92,29 +58,12 @@ window.onload = function() {
                 myLat = p.coords.latitude;
                 myLng = p.coords.longitude;
                 document.getElementById('gpsStatus').innerHTML = `📍 실시간 GPS 연결 성공`;
+                updateMapLinks("");
             },
-            e => document.getElementById('gpsStatus').innerText = "⚠️ GPS 권한을 허용하셔야 거리 계산이 가능합니다."
+            e => document.getElementById('gpsStatus').innerText = "⚠️ GPS 권한을 허용하셔야 현재 위치 기준 연동이 가능합니다."
         );
     }
 };
-
-function getDistance(lat1, lng1, lat2, lng2) {
-    const r = 6371;
-    const dLat = (lat2 - lat1) * Math.PI / 180;
-    const dLng = (lng2 - lng1) * Math.PI / 180;
-    const a = Math.sin(dLat/2) * Math.sin(dLat/2) + Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * Math.sin(dLng/2) * Math.sin(dLng/2);
-    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-    return r * c;
-}
-
-function formatTime(minutes) {
-    if (minutes >= 60) {
-        const h = Math.floor(minutes / 60);
-        const m = Math.round(minutes % 60);
-        return m > 0 ? `${h}시간 ${m}분` : `${h}시간`;
-    }
-    return `${Math.round(minutes)}분`;
-}
 
 function judgeDestination() {
     const input = document.getElementById('addressInput').value.trim();
@@ -129,13 +78,13 @@ function judgeDestination() {
     
     let status = 'yellow';
     let title = '🟡 서행 진입 (지방 도심)';
-    let desc = '일반적인 지방 도심입니다. 탈출 교통수단 막차 시간을 확인하세요. 자전거 탈출 거리가 나오면 진입 가능합니다.';
+    let desc = '일반적인 지방 도심입니다. 아래 지도 버튼을 눌러 실시간 교통 소요 시간과 복귀 경로를 반드시 크로스 체크하세요.';
 
     for (let kw of redKeywords) {
         if (input.includes(kw)) {
             status = 'red';
-            title = '🔴 진입 금지 (생유배지)';
-            desc = '공단이나 시골 오지입니다! 복귀비가 과다 지출되거나 고립 위험이 크니 패스하십시오.';
+            title = '🔴 진입 금지 (생유배지 위험)';
+            desc = '공단이나 오지 시골입니다. 복귀 동선이 매우 나쁠 수 있으니 아래 지도 버튼으로 탈출 수단이 있는지 꼭 확인 후 판단하세요.';
             break;
         }
     }
@@ -144,46 +93,10 @@ function judgeDestination() {
             if (input.includes(kw)) {
                 status = 'green';
                 title = '🟢 안전 지대 (핵심 거점)';
-                desc = '수도권 주요 콜밭이거나 KTX/터미널 인근입니다. 연계 콜이나 고속 탈출이 유리합니다.';
+                desc = '연계 콜 확률이 높은 중심 도심이거나 고속 복귀가 가능한 거점 근처입니다.';
                 break;
             }
         }
-    }
-
-    // 좌표 매칭 튜닝 데이터
-    let destLat = myLat;
-    let destLng = myLng;
-    
-    if(input.includes('상무') || input.includes('치평')) { destLat = 35.146; destLng = 126.848; }
-    else if(input.includes('평동')) { destLat = 35.121; destLng = 126.764; }
-    else if(input.includes('강남')) { destLat = 37.497; destLng = 127.027; }
-    else if(input.includes('대전역')) { destLat = 36.332; destLng = 127.434; }
-    else { 
-        destLat = myLat ? myLat + 0.05 : null; 
-        destLng = myLng ? myLng + 0.05 : null;
-    }
-
-    // 수단별 실전 연산 로직
-    if (myLat && myLng && destLat && destLng) {
-        const straightLineKm = getDistance(myLat, myLng, destLat, destLng);
-        
-        // 1. 자전거 (실제거리 = 직선의 1.3배, 시속 15km)
-        const bikeKm = straightLineKm * 1.3;
-        const bikeMin = (bikeKm / 15) * 60;
-        document.getElementById('distBike').innerText = `${bikeKm.toFixed(1)} km`;
-        document.getElementById('timeBike').innerText = formatTime(bikeMin);
-
-        // 2. 자동차 (실제거리 = 직선의 1.4배, 시속 50km)
-        const carKm = straightLineKm * 1.4;
-        const carMin = (carKm / 50) * 60;
-        document.getElementById('distCar').innerText = `${carKm.toFixed(1)} km`;
-        document.getElementById('timeCar').innerText = formatTime(carMin);
-
-        // 3. 도보 (실제거리 = 직선의 1.2배, 시속 4km)
-        const walkKm = straightLineKm * 1.2;
-        const walkMin = (walkKm / 4) * 60;
-        document.getElementById('distWalk').innerText = `${walkKm.toFixed(1)} km`;
-        document.getElementById('timeWalk').innerText = formatTime(walkMin);
     }
 
     resultCard.className = 'result-card ' + status;
@@ -191,9 +104,25 @@ function judgeDestination() {
     statusDesc.innerText = desc;
     resultCard.style.display = 'block';
     
-    const enc = encodeURIComponent(input);
-    document.getElementById('kakaoLink').href = `https://map.kakao.com/link/search/${enc}`;
-    document.getElementById('naverLink').href = `https://search.naver.com/search.naver?query=${enc}+지도`;
+    updateMapLinks(input);
+}
+
+function updateMapLinks(destName) {
+    const encDest = encodeURIComponent(destName);
+    
+    // 카카오맵: 내 GPS 좌표를 출발지(sp), 입력한 텍스트 주소를 도착지(ep)로 하여 길찾기 화면 직통 연동
+    if (myLat && myLng && destName) {
+        document.getElementById('kakaoLink').href = `https://map.kakao.com/link/to/${encDest},${myLat},${myLng}`;
+    } else {
+        document.getElementById('kakaoLink').href = `https://map.kakao.com/link/search/${encDest}`;
+    }
+    
+    // 네이버지도: 현재 위치에서 목적지 텍스트 주소로 가는 길찾기(route) 화면 직통 연동
+    if (myLat && myLng && destName) {
+        document.getElementById('naverLink').href = `https://map.naver.com/v5/dir/${myLng},${myLat}/${encDest}///mode`;
+    } else {
+        document.getElementById('naverLink').href = `https://map.naver.com/v5/search/${encDest}`;
+    }
 }
 </script>
 </body>
