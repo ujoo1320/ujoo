@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>전국 탁송 실전 판독기</title>
+    <style>
+        body { font-family: sans-serif; background-color: #f1f3f9; margin: 0; padding: 15px; color: #333; }
+        .container { max-width: 500px; margin: 0 auto; background: #fff; padding: 20px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+        h2 { text-align: center; color: #111; margin-top: 0; font-size: 20px; }
+        .gps-box { background-color: #e8f0fe; padding: 12px; border-radius: 8px; margin-bottom: 15px; font-size: 14px; font-weight: bold; color: #1a73e8; text-align: center; border: 1px solid #d2e3fc; }
+        .search-box { display: flex; gap: 10px; margin-bottom: 20px; }
+        input[type="text"] { flex: 1; padding: 12px; border: 2px solid #ddd; border-radius: 8px; font-size: 16px; outline: none; }
+        .btn-search { padding: 12px 20px; background-color: #1a73e8; color: white; border: none; border-radius: 8px; font-size: 16px; font-weight: bold; cursor: pointer; }
+        .result-card { display: none; padding: 20px; border-radius: 10px; text-align: center; margin-bottom: 20px; }
+        .status-badge { font-size: 22px; font-weight: bold; margin-bottom: 10px; }
+        .status-desc { font-size: 15px; line-height: 1.6; word-break: keep-all; }
+        .green { background-color: #e6f4ea; color: #137333; border: 2px solid #137333; }
+        .yellow { background-color: #fef7e0; color: #b06000; border: 2px solid #b06000; }
+        .red { background-color: #fce8e6; color: #c5221f; border: 2px solid #c5221f; }
+        .map-buttons { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        .map-btn { display: block; text-align: center; padding: 12px; color: white; text-decoration: none; border-radius: 8px; font-weight: bold; font-size: 14px; }
+        .kakao-btn { background-color: #fee500; color: #191919; }
+        .naver-btn { background-color: #03cf5d; color: white; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h2>🎯 전국 탁송/대리 실전 판독기</h2>
+    <div id="gpsStatus" class="gps-box">📍 현재 위치 파악 중...</div>
+    <div class="search-box">
+        <input type="text" id="addressInput" placeholder="도착지 입력 (예: 강남역, 평동공단)" onkeypress="if(event.keyCode==13) judgeDestination()">
+        <button class="btn-search" onclick="judgeDestination()">판독</button>
+    </div>
+    <div id="resultCard" class="result-card">
+        <div id="statusBadge" class="status-badge"></div>
+        <div id="statusDesc" class="status-desc"></div>
+    </div>
+    <div class="map-buttons">
+        <a id="kakaoLink" href="#" target="_blank" class="map-btn kakao-btn">카카오맵 연동</a>
+        <a id="naverLink" href="#" target="_blank" class="map-btn naver-btn">네이버지도 연동</a>
+    </div>
+</div>
+<script>
+window.onload = function() {
+    if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+            p => document.getElementById('gpsStatus').innerHTML = `📍 실시간 GPS 연결 성공 (위도:${p.coords.latitude.toFixed(2)}, 경도:${p.coords.longitude.toFixed(2)})`,
+            e => document.getElementById('gpsStatus').innerText = "⚠️ GPS 권한을 허용해 주셔야 현재 위치가 잡힙니다."
+        );
+    }
+};
+function judgeDestination() {
+    const input = document.getElementById('addressInput').value.trim();
+    const resultCard = document.getElementById('resultCard');
+    const statusBadge = document.getElementById('statusBadge');
+    const statusDesc = document.getElementById('statusDesc');
+    if (!input) return alert('도착지 주소를 입력해주세요!');
+    
+    const redKeywords = ['공단', '산단', '리', '면', '임곡', '삼도', '대촌', '본량', '동곡', '령', '곡', '화성 구석', '음성', '진천', '시골'];
+    const greenKeywords = ['역', '터미널', '노원', '강남', '서초', '송파', '분당', '판교', '수원', '일산', '부천', '인천', '상무', '첨단', '수완', '둔산', '동성로', '서면'];
+    
+    let status = 'yellow';
+    let title = '🟡 서행 진입 (지방 도심 / 연계 주의)';
+    let desc = '일반적인 지방 도심입니다. 탈출 교통수단(기차/버스) 막차 시간을 확인하세요. 자전거로 이동 거리를 좁힐 수 있다면 진입을 고려해 볼 만합니다.';
+
+    for (let kw of redKeywords) {
+        if (input.includes(kw)) {
+            status = 'red';
+            title = '🔴 진입 금지 (생유배지 고립 위험)';
+            desc = '공단이나 시골 오지입니다! 복귀비가 과다 지출되거나 막차 고립 위험이 크니 똥콜로 분류하고 패스하십시오.';
+            break;
+        }
+    }
+    if (status !== 'red') {
+        for (let kw of greenKeywords) {
+            if (input.includes(kw)) {
+                status = 'green';
+                title = '🟢 안전 지대 (수도권 콜밭 / 고속 복귀)';
+                desc = '수도권 주요 콜밭이거나 KTX/터미널 인근입니다. 연계 콜이나 고속 탈출이 유리하므로 과감하게 잡으셔도 이득입니다.';
+                break;
+            }
+        }
+    }
+    resultCard.className = 'result-card ' + status;
+    statusBadge.innerText = title;
+    statusDesc.innerText = desc;
+    resultCard.style.display = 'block';
+    const enc = encodeURIComponent(input);
+    document.getElementById('kakaoLink').href = `https://map.kakao.com/link/search/${enc}`;
+    document.getElementById('naverLink').href = `https://search.naver.com/search.naver?query=${enc}+지도`;
+}
+</script>
+</body>
+</html>
