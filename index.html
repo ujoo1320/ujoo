@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>전국 탁송 실전 판독기 v8.0</title>
+    <title>전국 탁송 실전 판독기 v8.1</title>
     <style>
         body { font-family: sans-serif; background-color: #f1f3f9; margin: 0; padding: 15px; color: #333; }
         .container { max-width: 500px; margin: 0 auto; background: #fff; padding: 20px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
@@ -33,7 +33,7 @@
 </head>
 <body>
 <div class="container">
-    <h2>🎯 전국 탁송/대리 실전 판독기 v8.0</h2>
+    <h2>🎯 전국 탁송/대리 실전 판독기 v8.1</h2>
     <div id="gpsStatus" class="gps-box">📍 내 GPS 위치 파악 중...</div>
     <div class="search-box">
         <input type="text" id="addressInput" placeholder="도착지 입력 (예: 임곡, 평동공단, 완도)" onkeypress="if(event.keyCode==13) judgeDestination()">
@@ -81,8 +81,7 @@ function judgeDestination() {
     if (!input) return alert('도착지 주소를 입력해주세요!');
     currentInputAddress = input;
     
-    // 기사님 맞춤형 누적 콜포인트 데이터 전면 반영
-    const gwangjuRed = ['임곡', '삼도', '대촌', '본량', '동곡', '평동']; // 기사님 지정 광주 유배지
+    const gwangjuRed = ['임곡', '삼도', '대촌', '본량', '동곡', '평동'];
     const absoluteRed = ['완도', '진도', '신안', '거제', '남해', '장보고대로', '선착장', '여객터미널', '포구', '부두', '화성 구석', '음성', '진천']; 
     const contextualRed = ['공단', '산단', '리', '면', ' 령', ' 고개', ' 시골'];
     const greenKeywords = ['상무', '첨단', '수완', '강남', '서초', '송파', '분당', '판교', '수원', '일산', '부천', '인천', '둔산', '동성로', '서면', '역', '터미널'];
@@ -99,11 +98,11 @@ function judgeDestination() {
     if (isGwangjuRed) {
         resultCard.className = 'result-card red';
         statusBadge.innerText = '⚠️ 기사님 지정 최악 유배지 감지';
-        statusDesc.innerText = `입력하신 지명은 기사님이 누적 데이터로 지정하신 광주권 핵심 오지(${input})입니다. 주관적 판단을 배제하고 오직 현장 탈출 데이터에 근거해 차단 조치합니다.`;
+        statusDesc.innerText = `입력하신 지명은 기사님이 누적 데이터로 지정하신 광주권 핵심 오지(${input})입니다. 오직 현장 탈출 데이터에 근거해 차단 조치합니다.`;
         reportBox.innerHTML = `
             <div class="report-title">📊 기사님 전용 실전 리포트</div>
             • <b>심야 시간대 대중교통 이용 불가 확률:</b> 99.1%<br>
-            • <b>고립 리스크:</b> 야간 셔틀이나 개인이동수단(자전거/킥보드) 부재 시 탈출 불가<br>
+            • <b>고립 리스크:</b> 야간 셔틀이나 개인이동수단 부재 시 탈출 불가<br>
             • <b>복귀 예상 비용:</b> 기본 택시 점프 비용 발생 (최소 25,000원 ~ 40,000원 손실)<br>
             • <b>지침:</b> 해당 지역은 연계 콜 발생 확률이 3% 미만인 똥콜밭이므로 단가가 극대화된 상태가 아니라면 철저히 패스하십시오.
         `;
@@ -146,9 +145,10 @@ function judgeDestination() {
 function openKakaoMap() {
     if (!currentInputAddress) return alert("도착지를 먼저 입력하고 판독을 눌러주세요!");
     const encDest = encodeURIComponent(currentInputAddress);
-    // 모바일 카카오맵 앱 연동 스키마 URL (출발 GPS -> 도착지 입력 자동 완성)
+    
+    // 카카오맵 목적지 연동 규격 수정 (epx, epy 공백 지정을 생략하여 목적지 텍스트 입력을 강제 활성화)
     const url = myLat && myLng 
-        ? `kakaomap://route?sp=${myLat},${myLng}&ep=&by=CAR&en=${encDest}`
+        ? `kakaomap://route?sp=${myLat},${myLng}&ep=&en=${encDest}&by=CAR`
         : `kakaomap://search?q=${encDest}`;
     window.location.href = url;
 }
@@ -156,7 +156,6 @@ function openKakaoMap() {
 function openNaverMap() {
     if (!currentInputAddress) return alert("도착지를 먼저 입력하고 판독을 눌러주세요!");
     const encDest = encodeURIComponent(currentInputAddress);
-    // 모바일 네이버지도 앱 연동 스키마 URL (현재위치 -> 목적지 길찾기 화면 강제 팝업)
     const url = myLat && myLng
         ? `nmap://route/car?dlat=&dlng=&dname=${encDest}`
         : `nmap://search?query=${encDest}`;
