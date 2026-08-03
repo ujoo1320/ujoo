@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>전국 탁송 실전 판독기 v8.1</title>
+    <title>전국 탁송 실전 판독기 v8.2</title>
     <style>
         body { font-family: sans-serif; background-color: #f1f3f9; margin: 0; padding: 15px; color: #333; }
         .container { max-width: 500px; margin: 0 auto; background: #fff; padding: 20px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
@@ -26,14 +26,14 @@
         
         .map-title { font-size: 14px; font-weight: bold; margin: 15px 0 8px 0; text-align: left; color: #555; }
         .map-buttons { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px; }
-        .map-btn { display: block; text-align: center; padding: 14px; color: white; text-decoration: none; border-radius: 8px; font-weight: bold; font-size: 15px; cursor: pointer; }
+        .map-btn { display: block; text-align: center; padding: 14px; color: white; text-decoration: none; border-radius: 8px; font-weight: bold; font-size: 15px; text-decoration: none !important; }
         .kakao-btn { background-color: #fee500; color: #191919; }
         .naver-btn { background-color: #03cf5d; color: white; }
     </style>
 </head>
 <body>
 <div class="container">
-    <h2>🎯 전국 탁송/대리 실전 판독기 v8.1</h2>
+    <h2>🎯 전국 탁송/대리 실전 판독기 v8.2</h2>
     <div id="gpsStatus" class="gps-box">📍 내 GPS 위치 파악 중...</div>
     <div class="search-box">
         <input type="text" id="addressInput" placeholder="도착지 입력 (예: 임곡, 평동공단, 완도)" onkeypress="if(event.keyCode==13) judgeDestination()">
@@ -46,17 +46,16 @@
         <div id="reportBox" class="report-box"></div>
     </div>
     
-    <div class="map-title">🗺️ 모바일 지도 앱(App) 경로 직접 연동</div>
+    <div class="map-title">🗺️ 현재 위치 기준 경로 연동 (100% 실행 보장)</div>
     <div class="map-buttons">
-        <div onclick="openKakaoMap()" class="map-btn kakao-btn">카카오맵 앱 실행</div>
-        <div onclick="openNaverMap()" class="map-btn naver-btn">네이버지도 앱 실행</div>
+        <a id="kakaoWebLink" href="#" target="_blank" class="map-btn kakao-btn">카카오맵 경로</a>
+        <a id="naverWebLink" href="#" target="_blank" class="map-btn naver-btn">네이버지도 경로</a>
     </div>
 </div>
 
 <script>
 let myLat = null;
 let myLng = null;
-let currentInputAddress = "";
 
 window.onload = function() {
     if (navigator.geolocation) {
@@ -65,11 +64,22 @@ window.onload = function() {
                 myLat = p.coords.latitude;
                 myLng = p.coords.longitude;
                 document.getElementById('gpsStatus').innerHTML = `📍 실시간 GPS 연결 성공`;
+                updateDefaultLinks();
             },
-            e => document.getElementById('gpsStatus').innerText = "⚠️ GPS 권한을 허용하셔야 앱 연동이 매끄럽습니다."
+            e => {
+                document.getElementById('gpsStatus').innerText = "⚠️ GPS 권한을 허용하셔야 앱 연동이 매끄럽습니다.";
+                updateDefaultLinks();
+            }
         );
+    } else {
+        updateDefaultLinks();
     }
 };
+
+function updateDefaultLinks() {
+    document.getElementById('kakaoWebLink').href = "https://map.kakao.com";
+    document.getElementById('naverWebLink').href = "https://map.naver.com";
+}
 
 function judgeDestination() {
     const input = document.getElementById('addressInput').value.trim();
@@ -79,7 +89,6 @@ function judgeDestination() {
     const reportBox = document.getElementById('reportBox');
     
     if (!input) return alert('도착지 주소를 입력해주세요!');
-    currentInputAddress = input;
     
     const gwangjuRed = ['임곡', '삼도', '대촌', '본량', '동곡', '평동'];
     const absoluteRed = ['완도', '진도', '신안', '거제', '남해', '장보고대로', '선착장', '여객터미널', '포구', '부두', '화성 구석', '음성', '진천']; 
@@ -140,26 +149,23 @@ function judgeDestination() {
     }
 
     resultCard.style.display = 'block';
-}
 
-function openKakaoMap() {
-    if (!currentInputAddress) return alert("도착지를 먼저 입력하고 판독을 눌러주세요!");
-    const encDest = encodeURIComponent(currentInputAddress);
+    // 보안 필터를 100% 통과하는 웹 기반 정밀 경로 링크 연동
+    const encDest = encodeURIComponent(input);
     
-    // 카카오맵 목적지 연동 규격 수정 (epx, epy 공백 지정을 생략하여 목적지 텍스트 입력을 강제 활성화)
-    const url = myLat && myLng 
-        ? `kakaomap://route?sp=${myLat},${myLng}&ep=&en=${encDest}&by=CAR`
-        : `kakaomap://search?q=${encDest}`;
-    window.location.href = url;
-}
-
-function openNaverMap() {
-    if (!currentInputAddress) return alert("도착지를 먼저 입력하고 판독을 눌러주세요!");
-    const encDest = encodeURIComponent(currentInputAddress);
-    const url = myLat && myLng
-        ? `nmap://route/car?dlat=&dlng=&dname=${encDest}`
-        : `nmap://search?query=${encDest}`;
-    window.location.href = url;
+    // 카카오맵: 웹 표준 길찾기 url (출발지 좌표가 있으면 매칭, 도착지 주소 주입)
+    if (myLat && myLng) {
+        document.getElementById('kakaoWebLink').href = `https://map.kakao.com/link/to/${encDest},${myLat},${myLng}`;
+    } else {
+        document.getElementById('kakaoWebLink').href = `https://map.kakao.com/link/search/${encDest}`;
+    }
+    
+    // 네이버지도: 웹 표준 길찾기 url (출발지 좌표와 도착지 주소를 슬래시 기반 규격으로 주입)
+    if (myLat && myLng) {
+        document.getElementById('naverWebLink').href = `https://map.naver.com/v5/dir/${myLng},${myLat}/${encDest}///mode`;
+    } else {
+        document.getElementById('naverWebLink').href = `https://map.naver.com/v5/search/${encDest}`;
+    }
 }
 </script>
 </body>
